@@ -1,0 +1,294 @@
+define appleL 		$00
+define appleH	   	$01
+define headL		  $10
+define headH		  $11
+define bodyStart	$12
+define direction	$02
+define length		  $03
+
+define movUp 	 	  1
+define movRight		2
+define movDown		4
+define movLeft		8
+
+define ASCII_w	 	$77
+define ASCII_a		$61	
+define ASCII_s 		$73
+define ASCII_d		$64
+
+define lastKey		$FF
+define random		  $FE
+
+
+  jsr init
+  jsr generateApple
+  jsr loop
+ 
+init:
+  
+  lda #movRight
+  sta direction
+ 
+  lda #4
+  sta length
+
+  lda #$11
+  sta headL
+   
+  lda #$10
+  sta bodyStart
+  
+  lda #$0F
+  sta $14
+  
+  lda #$04
+  sta headH
+  sta $13
+  sta $15
+  rts 
+
+generateApple:
+   
+  lda random
+  sta appleL
+  
+  lda random
+  and #3
+  clc
+  adc #2
+  sta appleH
+  rts
+
+loop:
+
+  jsr readKey
+  jsr checkCollision
+  jsr updateSnake
+  jsr drawSnake
+  jsr drawApple
+  jsr spinWhells
+  jmp loop
+
+readKey:
+  
+  lda lastKey
+  cmp #ASCII_w
+  beq upKey
+  cmp #ASCII_a
+  beq leftKey
+  cmp #ASCII_s
+  beq downKey 
+  cmp #ASCII_d
+  beq rightKey
+  rts
+
+upKey:
+
+   lda #movDown
+   bit direction
+   bne illegalMove
+    
+   lda #movUp
+   sta direction
+   rts
+
+rightKey:
+  
+   lda #movLeft
+   bit direction
+   bne illegalMove
+
+   lda #movRight
+   sta direction
+   rts
+
+downKey:
+   
+   lda #movUp
+   bit direction
+   bne illegalMove
+    
+   lda #movDown
+   sta direction 
+   rts   
+
+leftKey:
+   
+   lda #movRight
+   bit direction
+   bne illegalMove
+  
+   lda #movLeft 
+   sta direction  
+   rts
+
+illegalMove:
+    
+   rts
+
+updateSnake:
+   
+   ldx length
+   dex
+loopUpdate:
+   
+   lda headL,x
+   sta bodyStart,x
+   dex
+   bpl loopUpdate
+   
+   lda direction
+   lsr 
+   bcs up     ;1
+   lsr
+   bcs right  ;2
+   lsr
+   bcs down   ;4
+   lsr
+   bcs left   ;8
+
+up:
+  
+   lda headL 
+   sec
+   sbc #$20 
+   sta headL
+   bcc upup
+   rts
+
+upup:
+   
+   dec headH
+   lda #1
+   cmp headH 
+   beq collision
+   rts
+
+right:
+
+   inc headL
+   lda #$1F
+   bit headL
+   beq collision
+   rts
+
+down: 
+    
+   lda headL
+   clc 
+   adc #$20
+   sta headL
+   bcs downdown
+   rts
+
+downdown:
+   
+   inc headH
+   lda #$6
+   cmp headH
+   beq collision
+   rts
+
+left:
+
+   dec headL
+   lda headL
+   and #$1f
+   cmp #$1f
+   beq collision
+   rts
+
+collision:
+   
+   jmp gameOver
+
+drawSnake:
+   
+   ldx length
+   lda #0   
+   sta (headL,x)
+
+   ldx #0
+   lda #1
+   sta (headL,x)
+   rts   
+
+drawApple:
+  
+   ldx #0 
+   lda random
+   and #$0E
+   clc
+   adc #$01
+   sta (appleL,x)
+   rts
+
+checkCollision:
+  
+   jsr checkAppleCollision
+   jsr checkSnakeCollision
+   rts
+
+checkAppleCollision:
+     
+   lda appleL
+   cmp headL
+   bne notCollision
+   lda appleH
+   cmp headH
+   bne notCollision
+   
+   lda #1          ; correção de cor nao permanecer a 
+   sta (appleL,x)  ; ultima cor no corpo
+   inc length      ; um para byte baixo
+   inc length      ; um para byte alto
+   jsr generateApple
+ 
+notCollision:
+   
+  rts
+
+checkSnakeCollision:
+  
+  ldx #2 ;analizando o segundo seguimento
+
+loopCollisionSnake:
+
+  lda headL,x  ;teste byte baixo do seguimento   
+  cmp headL
+  bne continueCollision
+
+  lda headH,x  ;testa byte alto do seguimento
+  cmp headH
+  beq didCollision
+
+continueCollision:
+  
+  inx   	   ;incremento byte baixo
+  inx    	   ;incremento byte alto
+  cpx length       ;x igual a comprimento encerra loop
+  beq didntCollision
+  jmp loopCollisionSnake
+
+didntCollision:
+  
+  rts
+didCollision:
+
+  jmp gameOver
+
+spinWhells:
+
+  ldx #$FF
+  dex
+
+loopSpin:
+  
+  nop
+  nop
+  dex
+  bne loopSpin
+  rts
+ 
+gameOver:
+  BRK
