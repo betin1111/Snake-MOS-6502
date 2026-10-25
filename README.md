@@ -35,3 +35,16 @@ For me, the most important achievement was not just completing the game, but rea
 This is a learning project and part of my journey into low-level programming. It represents an important step in understanding how software interacts with hardware and how classic games can be built using a limited instruction set.
 
 More than a finished game, this project is a foundation for future experiments and more complex implementations.
+
+▶️ How to Run
+
+This game was developed using the [Easy 6502 emulator](https://skilldrick.github.io/easy6502/), which runs directly in the browser.
+
+To play:
+
+1. Open the Easy 6502 emulator.
+2. Copy the source code from this repository.
+3. Paste it into the emulator's code editor, replacing the example code.
+4. Run the program and enjoy the game!
+
+No installation is required.
